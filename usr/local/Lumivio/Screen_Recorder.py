@@ -18,7 +18,6 @@ import time
 from datetime import datetime
 import threading
 
-
 try:
     gi.require_version('AppIndicator3', '0.1')
     from gi.repository import AppIndicator3
@@ -39,25 +38,25 @@ class ScreenRecorderApp(Gtk.Window):
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_resizable(False)
         
-
+        # Detectar idioma del sistema
         self.setup_language()
         
-
+        # Variables de configuración
         self.sound_file = "/usr/local/Lumivio/camera-shutter.wav"
         self.icon_path = "/usr/local/Lumivio/camera.svg"
         
-
+        # Configurar icono de ventana
         if os.path.exists(self.icon_path):
             self.set_icon_from_file(self.icon_path)
         
-
+        # Variables de estado
         self.is_recording = False
         self.is_paused = False
         self.ffmpeg_process = None
         self.current_output = ""
         self.current_screen = ""
         
-
+        # Configuración predeterminada
         self.frame_rate = 25
         self.video_quality = 23
         self.audio_bitrate = 128
@@ -65,17 +64,16 @@ class ScreenRecorderApp(Gtk.Window):
         self.file_name = "Recording"
         self.file_ext = "mp4"
         
-
+        # Crear interfaz
         self.create_ui()
         
-
+        # System tray indicator
         self.indicator = None
         self.setup_indicator()
         
     def setup_language(self):
         """Detectar y configurar idioma del sistema"""
         try:
-
             try:
                 locale.setlocale(locale.LC_ALL, '')
                 lang = locale.getlocale()[0]
@@ -97,7 +95,11 @@ class ScreenRecorderApp(Gtk.Window):
             'es': {
                 'title': 'Grabador de Pantalla',
                 'screen_prompt': 'Seleccione pantalla',
-                'audio_prompt': 'Incluir audio (solo interno)',
+                'audio_prompt': 'Incluir audio',
+                'audio_source_prompt': 'Fuente de audio',
+                'audio_system': 'Solo sistema (interno)',
+                'audio_mic': 'Solo micrófono',
+                'audio_both': 'Sistema + Micrófono',
                 'quality_prompt': 'Calidad de video (0-51, menor=mejor)',
                 'framerate_prompt': 'Tasa de frames (fps)',
                 'dir_prompt': 'Carpeta destino',
@@ -126,7 +128,11 @@ class ScreenRecorderApp(Gtk.Window):
             'en': {
                 'title': 'Screen Recorder',
                 'screen_prompt': 'Select screen',
-                'audio_prompt': 'Include audio (internal only)',
+                'audio_prompt': 'Include audio',
+                'audio_source_prompt': 'Audio source',
+                'audio_system': 'System only (internal)',
+                'audio_mic': 'Microphone only',
+                'audio_both': 'System + Microphone',
                 'quality_prompt': 'Video quality (0-51, lower=better)',
                 'framerate_prompt': 'Frame rate (fps)',
                 'dir_prompt': 'Destination folder',
@@ -155,7 +161,11 @@ class ScreenRecorderApp(Gtk.Window):
             'fr': {
                 'title': 'Enregistreur d\'écran',
                 'screen_prompt': 'Sélectionnez l\'écran',
-                'audio_prompt': 'Inclure l\'audio (interne seulement)',
+                'audio_prompt': 'Inclure l\'audio',
+                'audio_source_prompt': 'Source audio',
+                'audio_system': 'Système seulement',
+                'audio_mic': 'Microphone seulement',
+                'audio_both': 'Système + Microphone',
                 'quality_prompt': 'Qualité vidéo (0-51, plus bas=meilleur)',
                 'framerate_prompt': 'Fréquence d\'images (fps)',
                 'dir_prompt': 'Dossier de destination',
@@ -184,7 +194,11 @@ class ScreenRecorderApp(Gtk.Window):
             'de': {
                 'title': 'Bildschirmrekorder',
                 'screen_prompt': 'Bildschirm auswählen',
-                'audio_prompt': 'Audio einbeziehen (nur intern)',
+                'audio_prompt': 'Audio einbeziehen',
+                'audio_source_prompt': 'Audioquelle',
+                'audio_system': 'Nur System',
+                'audio_mic': 'Nur Mikrofon',
+                'audio_both': 'System + Mikrofon',
                 'quality_prompt': 'Videoqualität (0-51, niedriger=besser)',
                 'framerate_prompt': 'Bildrate (fps)',
                 'dir_prompt': 'Zielordner',
@@ -213,7 +227,11 @@ class ScreenRecorderApp(Gtk.Window):
             'it': {
                 'title': 'Registratore Schermo',
                 'screen_prompt': 'Seleziona schermo',
-                'audio_prompt': 'Includi audio (solo interno)',
+                'audio_prompt': 'Includi audio',
+                'audio_source_prompt': 'Sorgente audio',
+                'audio_system': 'Solo sistema',
+                'audio_mic': 'Solo microfono',
+                'audio_both': 'Sistema + Microfono',
                 'quality_prompt': 'Qualità video (0-51, più basso=migliore)',
                 'framerate_prompt': 'Frame rate (fps)',
                 'dir_prompt': 'Cartella destinazione',
@@ -242,7 +260,11 @@ class ScreenRecorderApp(Gtk.Window):
             'pt': {
                 'title': 'Gravador de Tela',
                 'screen_prompt': 'Selecione tela',
-                'audio_prompt': 'Incluir áudio (apenas interno)',
+                'audio_prompt': 'Incluir áudio',
+                'audio_source_prompt': 'Fonte de áudio',
+                'audio_system': 'Apenas sistema',
+                'audio_mic': 'Apenas microfone',
+                'audio_both': 'Sistema + Microfone',
                 'quality_prompt': 'Qualidade de vídeo (0-51, menor=melhor)',
                 'framerate_prompt': 'Taxa de quadros (fps)',
                 'dir_prompt': 'Pasta destino',
@@ -271,7 +293,11 @@ class ScreenRecorderApp(Gtk.Window):
             'ru': {
                 'title': 'Запись экрана',
                 'screen_prompt': 'Выберите экран',
-                'audio_prompt': 'Включить звук (только внутренний)',
+                'audio_prompt': 'Включить звук',
+                'audio_source_prompt': 'Источник звука',
+                'audio_system': 'Только система',
+                'audio_mic': 'Только микрофон',
+                'audio_both': 'Система + Микрофон',
                 'quality_prompt': 'Качество видео (0-51, меньше=лучше)',
                 'framerate_prompt': 'Частота кадров (fps)',
                 'dir_prompt': 'Папка назначения',
@@ -300,7 +326,11 @@ class ScreenRecorderApp(Gtk.Window):
             'ja': {
                 'title': '画面録画',
                 'screen_prompt': '画面を選択',
-                'audio_prompt': '音声を含める（内部のみ）',
+                'audio_prompt': '音声を含める',
+                'audio_source_prompt': '音声ソース',
+                'audio_system': 'システムのみ',
+                'audio_mic': 'マイクのみ',
+                'audio_both': 'システム + マイク',
                 'quality_prompt': 'ビデオ品質（0-51、低いほど良い）',
                 'framerate_prompt': 'フレームレート（fps）',
                 'dir_prompt': '保存先フォルダ',
@@ -329,7 +359,11 @@ class ScreenRecorderApp(Gtk.Window):
             'zh': {
                 'title': '屏幕录制',
                 'screen_prompt': '选择屏幕',
-                'audio_prompt': '包含音频（仅内部）',
+                'audio_prompt': '包含音频',
+                'audio_source_prompt': '音频来源',
+                'audio_system': '仅系统',
+                'audio_mic': '仅麦克风',
+                'audio_both': '系统 + 麦克风',
                 'quality_prompt': '视频质量（0-51，越低越好）',
                 'framerate_prompt': '帧率（fps）',
                 'dir_prompt': '目标文件夹',
@@ -358,7 +392,11 @@ class ScreenRecorderApp(Gtk.Window):
             'ar': {
                 'title': 'مسجل الشاشة',
                 'screen_prompt': 'اختر الشاشة',
-                'audio_prompt': 'تضمين الصوت (داخلي فقط)',
+                'audio_prompt': 'تضمين الصوت',
+                'audio_source_prompt': 'مصدر الصوت',
+                'audio_system': 'النظام فقط',
+                'audio_mic': 'الميكروفون فقط',
+                'audio_both': 'النظام + الميكروفون',
                 'quality_prompt': 'جودة الفيديو (0-51، أقل=أفضل)',
                 'framerate_prompt': 'معدل الإطارات (fps)',
                 'dir_prompt': 'مجلد الوجهة',
@@ -395,7 +433,6 @@ class ScreenRecorderApp(Gtk.Window):
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.add(main_box)
         
-
         scroll = Gtk.ScrolledWindow()
         scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC)
         main_box.pack_start(scroll, True, True, 0)
@@ -407,7 +444,6 @@ class ScreenRecorderApp(Gtk.Window):
         content_box.set_margin_bottom(16)
         scroll.add(content_box)
         
-
         screen_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         
         screen_label = Gtk.Label(label=self.strings['screen_prompt'])
@@ -421,49 +457,62 @@ class ScreenRecorderApp(Gtk.Window):
         screen_frame = self.create_section_frame("📺 " + self.strings['screen_prompt'], screen_content)
         content_box.pack_start(screen_frame, False, False, 0)
         
-
         video_content = Gtk.Grid()
         video_content.set_column_spacing(12)
         video_content.set_row_spacing(12)
         
-
+        # Audio - checkbox
         self.audio_check = Gtk.CheckButton(label=self.strings['audio_prompt'])
         self.audio_check.set_active(True)
+        self.audio_check.connect("toggled", self.on_audio_toggled)
         video_content.attach(self.audio_check, 0, 0, 2, 1)
-        
 
+        # Audio - fuente
+        audio_source_label = Gtk.Label(label=self.strings.get('audio_source_prompt', 'Audio source'))
+        audio_source_label.set_xalign(0)
+        video_content.attach(audio_source_label, 0, 1, 1, 1)
+
+        self.audio_source_combo = Gtk.ComboBoxText()
+        self.audio_source_combo.append_text(self.strings.get('audio_system', 'System only'))
+        self.audio_source_combo.append_text(self.strings.get('audio_mic', 'Microphone only'))
+        self.audio_source_combo.append_text(self.strings.get('audio_both', 'System + Microphone'))
+        self.audio_source_combo.set_active(0)
+        self.audio_source_combo.set_hexpand(True)
+        video_content.attach(self.audio_source_combo, 1, 1, 1, 1)
+        
+        # Calidad
         quality_label = Gtk.Label(label=self.strings['quality_prompt'])
         quality_label.set_xalign(0)
-        video_content.attach(quality_label, 0, 1, 1, 1)
+        video_content.attach(quality_label, 0, 2, 1, 1)
         
         self.quality_spin = Gtk.SpinButton()
         self.quality_spin.set_range(0, 51)
         self.quality_spin.set_increments(1, 5)
         self.quality_spin.set_value(23)
         self.quality_spin.set_hexpand(True)
-        video_content.attach(self.quality_spin, 1, 1, 1, 1)
+        video_content.attach(self.quality_spin, 1, 2, 1, 1)
         
-
+        # Frame rate
         fps_label = Gtk.Label(label=self.strings['framerate_prompt'])
         fps_label.set_xalign(0)
-        video_content.attach(fps_label, 0, 2, 1, 1)
+        video_content.attach(fps_label, 0, 3, 1, 1)
         
         self.fps_spin = Gtk.SpinButton()
         self.fps_spin.set_range(10, 60)
         self.fps_spin.set_increments(1, 5)
         self.fps_spin.set_value(25)
         self.fps_spin.set_hexpand(True)
-        video_content.attach(self.fps_spin, 1, 2, 1, 1)
+        video_content.attach(self.fps_spin, 1, 3, 1, 1)
         
         video_frame = self.create_section_frame("   " + self.strings['settings'], video_content)
         content_box.pack_start(video_frame, False, False, 0)
         
-
+        # Sección: Salida
         output_content = Gtk.Grid()
         output_content.set_column_spacing(12)
         output_content.set_row_spacing(12)
         
-
+        # Carpeta
         folder_label = Gtk.Label(label=self.strings['dir_prompt'])
         folder_label.set_xalign(0)
         output_content.attach(folder_label, 0, 0, 1, 1)
@@ -480,7 +529,7 @@ class ScreenRecorderApp(Gtk.Window):
         folder_box.pack_start(folder_btn, False, False, 0)
         output_content.attach(folder_box, 1, 0, 1, 1)
         
-
+        # Nombre
         name_label = Gtk.Label(label=self.strings['name_prompt'])
         name_label.set_xalign(0)
         output_content.attach(name_label, 0, 1, 1, 1)
@@ -490,7 +539,7 @@ class ScreenRecorderApp(Gtk.Window):
         self.name_entry.set_hexpand(True)
         output_content.attach(self.name_entry, 1, 1, 1, 1)
         
-
+        # Formato
         format_label = Gtk.Label(label=self.strings['format_prompt'])
         format_label.set_xalign(0)
         output_content.attach(format_label, 0, 2, 1, 1)
@@ -506,44 +555,44 @@ class ScreenRecorderApp(Gtk.Window):
         output_frame = self.create_section_frame("󰉔   " + self.strings['dir_prompt'], output_content)
         content_box.pack_start(output_frame, False, False, 0)
         
-
+        # Label de estado
         self.status_label = Gtk.Label()
         self.status_label.set_margin_top(8)
         content_box.pack_start(self.status_label, False, False, 0)
         
-
+        # Botones de acción
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         button_box.set_margin_start(16)
         button_box.set_margin_end(16)
         button_box.set_margin_top(12)
         button_box.set_margin_bottom(16)
         
-
+        # Botón Salir
         exit_btn = Gtk.Button(label=self.strings['exit_button'])
         exit_btn.connect("clicked", self.on_exit_clicked)
         button_box.pack_start(exit_btn, False, False, 0)
         
-
+        # Botón Volver a Lumivio
         back_btn = Gtk.Button(label=self.strings['back_to_lumivio'])
         back_btn.connect("clicked", self.on_back_to_lumivio)
         button_box.pack_start(back_btn, False, False, 0)
         
-
+        # Espaciador
         button_box.pack_start(Gtk.Box(), True, True, 0)
         
-
+        # Botón Pausar/Reanudar
         self.pause_btn = Gtk.Button(label=self.strings['pause_button'])
         self.pause_btn.connect("clicked", self.on_pause_clicked)
         self.pause_btn.set_sensitive(False)
         button_box.pack_start(self.pause_btn, False, False, 0)
         
-
+        # Botón Detener
         self.stop_btn = Gtk.Button(label=self.strings['stop_button'])
         self.stop_btn.connect("clicked", self.on_stop_clicked)
         self.stop_btn.set_sensitive(False)
         button_box.pack_start(self.stop_btn, False, False, 0)
         
-
+        # Botón Grabar
         self.record_btn = Gtk.Button(label=self.strings['record_button'])
         self.record_btn.connect("clicked", self.on_record_clicked)
         button_box.pack_start(self.record_btn, False, False, 0)
@@ -555,14 +604,14 @@ class ScreenRecorderApp(Gtk.Window):
         frame = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         frame.get_style_context().add_class("section-frame")
         
-
+        # Título de sección
         title_label = Gtk.Label()
         title_label.set_markup(f"<b>{title}</b>")
         title_label.set_xalign(0)
         title_label.get_style_context().add_class("section-title")
         frame.pack_start(title_label, False, False, 0)
         
-
+        # Contenido
         frame.pack_start(content_widget, True, True, 0)
         
         return frame
@@ -617,6 +666,10 @@ class ScreenRecorderApp(Gtk.Window):
                 stderr=subprocess.DEVNULL
             )
     
+    def on_audio_toggled(self, widget):
+        """Habilitar/deshabilitar selector de fuente de audio"""
+        self.audio_source_combo.set_sensitive(widget.get_active())
+
     def on_record_clicked(self, widget):
         """Iniciar grabación"""
         screen = self.screen_combo.get_active_text()
@@ -624,7 +677,6 @@ class ScreenRecorderApp(Gtk.Window):
             self.show_error(self.strings['screen_error'])
             return
         
-
         try:
             result = subprocess.run(
                 ['xrandr', '--current'],
@@ -646,7 +698,6 @@ class ScreenRecorderApp(Gtk.Window):
                 self.show_error(self.strings['screen_error'])
                 return
             
-
             parts = screen_info.split('+')
             resolution = parts[0]
             position = f"+{parts[1]},+{parts[2]}" if len(parts) > 2 else "+0,0"
@@ -655,7 +706,6 @@ class ScreenRecorderApp(Gtk.Window):
             self.show_error(self.strings['screen_error'])
             return
         
-
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         filename = self.name_entry.get_text() or "Recording"
         file_ext = self.format_combo.get_active_text()
@@ -677,20 +727,59 @@ class ScreenRecorderApp(Gtk.Window):
             '-i', f':0.0{position}'
         ]
         
-
         if self.audio_check.get_active():
+            audio_mode = self.audio_source_combo.get_active() 
             try:
                 sink = subprocess.check_output(
                     ['pactl', 'get-default-sink'],
                     text=True
                 ).strip()
-                cmd.extend([
-                    '-f', 'pulse',
-                    '-i', f'{sink}.monitor',
-                    '-c:a', 'aac',
-                    '-b:a', '128k'
-                ])
-            except:
+
+                mic_source = subprocess.check_output(
+                    ['pactl', 'get-default-source'],
+                    text=True
+                ).strip()
+
+                if mic_source.endswith('.monitor'):
+                    try:
+                        sources_out = subprocess.check_output(
+                            ['pactl', 'list', 'short', 'sources'],
+                            text=True
+                        )
+                        for src_line in sources_out.splitlines():
+                            parts_src = src_line.split()
+                            if len(parts_src) >= 2 and not parts_src[1].endswith('.monitor'):
+                                mic_source = parts_src[1]
+                                break
+                    except Exception:
+                        pass
+
+                if audio_mode == 0:
+
+                    cmd.extend([
+                        '-f', 'pulse',
+                        '-i', f'{sink}.monitor',
+                        '-c:a', 'aac',
+                        '-b:a', '128k'
+                    ])
+                elif audio_mode == 1:
+
+                    cmd.extend([
+                        '-f', 'pulse',
+                        '-i', mic_source,
+                        '-c:a', 'aac',
+                        '-b:a', '128k'
+                    ])
+                else:
+                   
+                    cmd.extend([
+                        '-f', 'pulse', '-i', f'{sink}.monitor',
+                        '-f', 'pulse', '-i', mic_source,
+                        '-filter_complex', 'amix=inputs=2:duration=first:dropout_transition=2',
+                        '-c:a', 'aac',
+                        '-b:a', '128k'
+                    ])
+            except Exception:
                 pass
         
         cmd.extend([
@@ -701,7 +790,6 @@ class ScreenRecorderApp(Gtk.Window):
             '-y', self.current_output
         ])
         
-
         self.ffmpeg_process = subprocess.Popen(
             cmd,
             stdout=subprocess.DEVNULL,
@@ -711,19 +799,16 @@ class ScreenRecorderApp(Gtk.Window):
         self.is_recording = True
         self.current_screen = screen
         
-
+        # Actualizar UI
         self.record_btn.set_sensitive(False)
         self.stop_btn.set_sensitive(True)
         self.pause_btn.set_sensitive(True)
         self.status_label.set_text(f"⏺ {self.strings['recording']}: {screen}")
         
-
         self.update_indicator()
         
-
         self.play_sound()
         
-
         self.iconify()
     
     def on_pause_clicked(self, widget):
@@ -732,22 +817,18 @@ class ScreenRecorderApp(Gtk.Window):
             return
         
         if self.is_paused:
-
             os.kill(self.ffmpeg_process.pid, signal.SIGCONT)
             self.is_paused = False
             self.pause_btn.set_label(self.strings['pause_button'])
             self.status_label.set_text(f"⏺ {self.strings['recording']}: {self.current_screen}")
         else:
-
             os.kill(self.ffmpeg_process.pid, signal.SIGSTOP)
             self.is_paused = True
             self.pause_btn.set_label(self.strings['resume_button'])
             self.status_label.set_text(f"⏸ {self.strings['paused']}")
         
-
         self.update_indicator()
         
-
         self.play_sound()
     
     def on_stop_clicked(self, widget):
@@ -755,35 +836,28 @@ class ScreenRecorderApp(Gtk.Window):
         if not self.ffmpeg_process:
             return
         
-
         if self.is_paused:
             os.kill(self.ffmpeg_process.pid, signal.SIGCONT)
             self.is_paused = False
         
-
         self.ffmpeg_process.send_signal(signal.SIGINT)
         self.ffmpeg_process.wait()
         
         self.is_recording = False
         self.is_paused = False
         
-
         self.record_btn.set_sensitive(True)
         self.stop_btn.set_sensitive(False)
         self.pause_btn.set_sensitive(False)
         self.pause_btn.set_label(self.strings['pause_button'])
         self.status_label.set_text("")
         
-
         self.update_indicator()
         
-
         self.play_sound()
         
-
         self.present()
         
-
         if os.path.exists(self.current_output):
             self.show_complete_dialog()
     
@@ -804,14 +878,12 @@ class ScreenRecorderApp(Gtk.Window):
                 if self.ffmpeg_process:
                     self.ffmpeg_process.send_signal(signal.SIGINT)
                     self.ffmpeg_process.wait()
-
                 try:
                     subprocess.Popen(["/usr/local/Lumivio/lumivio.py"])
                 except:
                     pass
                 self.destroy()
         else:
-
             try:
                 subprocess.Popen(["/usr/local/Lumivio/lumivio.py"])
             except:
@@ -860,7 +932,7 @@ class ScreenRecorderApp(Gtk.Window):
         label.set_line_wrap(True)
         content_area.pack_start(label, True, True, 0)
         
-
+        # Botones
         dialog.add_button(self.strings['close_button'], Gtk.ResponseType.CLOSE)
         dialog.add_button(self.strings['preview_button'], Gtk.ResponseType.YES)
         dialog.add_button(self.strings['open_button'], Gtk.ResponseType.OK)
@@ -879,16 +951,16 @@ class ScreenRecorderApp(Gtk.Window):
         """Vista previa del video"""
         player = None
         
-
+        # Prioridad 1: Oply-Video.py de Essora
         if os.path.exists('/usr/local/Oply/Oply-Video.py'):
             player = ['/usr/local/Oply/Oply-Video.py', video_file]
-
+        # Prioridad 2: mpv
         elif subprocess.run(['which', 'mpv'], capture_output=True).returncode == 0:
             player = ['mpv', '--quiet', '--force-window=immediate', '--loop', '--no-resume-playback', video_file]
-
+        # Prioridad 3: mplayer
         elif subprocess.run(['which', 'mplayer'], capture_output=True).returncode == 0:
             player = ['mplayer', '-quiet', '-loop', '0', video_file]
-
+        # Prioridad 4: ffplay
         elif subprocess.run(['which', 'ffplay'], capture_output=True).returncode == 0:
             player = ['ffplay', '-autoexit', '-window_title', 'Vista previa', video_file]
         else:
@@ -924,7 +996,7 @@ class ScreenRecorderApp(Gtk.Window):
             )
             self.indicator.set_status(AppIndicator3.IndicatorStatus.ACTIVE)
             
-
+            # Crear menú
             self.indicator_menu = Gtk.Menu()
             self.update_indicator_menu()
             self.indicator.set_menu(self.indicator_menu)
@@ -937,11 +1009,10 @@ class ScreenRecorderApp(Gtk.Window):
         if not self.indicator:
             return
         
-
+        # Limpiar menú
         for item in self.indicator_menu.get_children():
             self.indicator_menu.remove(item)
         
-
         show_item = Gtk.MenuItem(label="🪟 Mostrar ventana" if not self.get_visible() else "🪟 Ocultar ventana")
         show_item.connect("activate", self.toggle_window_visibility)
         self.indicator_menu.append(show_item)
@@ -949,7 +1020,6 @@ class ScreenRecorderApp(Gtk.Window):
         self.indicator_menu.append(Gtk.SeparatorMenuItem())
         
         if self.is_recording:
-
             if self.is_paused:
                 resume_item = Gtk.MenuItem(label=self.strings['resume_button'])
                 resume_item.connect("activate", lambda x: self.on_pause_clicked(None))
@@ -965,7 +1035,6 @@ class ScreenRecorderApp(Gtk.Window):
             
             self.indicator_menu.append(Gtk.SeparatorMenuItem())
         
-
         open_item = Gtk.MenuItem(label=self.strings['open_button'])
         open_item.connect("activate", lambda x: subprocess.Popen(['xdg-open', self.output_dir]))
         self.indicator_menu.append(open_item)
@@ -982,7 +1051,6 @@ class ScreenRecorderApp(Gtk.Window):
             self.hide()
         else:
             self.present()
-
         self.update_indicator_menu()
     
     def update_indicator(self):
