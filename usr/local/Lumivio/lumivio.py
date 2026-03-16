@@ -23,17 +23,22 @@ class EssoraLumivioApp(Gtk.Window):
         self.set_position(Gtk.WindowPosition.CENTER)
         self.set_resizable(False)
         
+        # Detectar idioma del sistema
         self.setup_language()
         
+        # Variables de configuración
         self.output_dir = os.path.expanduser("~")
         self.sound_file = "/usr/local/Lumivio/camera-shutter.wav"
         self.icon_path = "/usr/local/Lumivio/camera.svg"
         
+        # Configurar icono de ventana
         if os.path.exists(self.icon_path):
             self.set_icon_from_file(self.icon_path)
         
+        # Configurar CSS para tema oscuro y estilo moderno
         self.setup_css()
         
+        # Crear interfaz
         self.create_ui()
         
     def setup_language(self):
@@ -522,19 +527,19 @@ class EssoraLumivioApp(Gtk.Window):
     
     def create_ui(self):
         """Crear interfaz de usuario"""
-
+        # Crear HeaderBar
         headerbar = Gtk.HeaderBar()
         headerbar.set_show_close_button(True)
         headerbar.set_title("Essora Lumivio")
         headerbar.props.title = "Essora Lumivio"
         self.set_titlebar(headerbar)
         
-
+        # Botón de menú (3 puntos)
         menu_button = Gtk.MenuButton()
         menu_icon = Gtk.Image.new_from_icon_name("open-menu-symbolic", Gtk.IconSize.BUTTON)
         menu_button.set_image(menu_icon)
         
-
+        # Crear menú
         menu = Gtk.Menu()
         
         about_item = Gtk.MenuItem(label=self.strings['about'])
@@ -546,50 +551,50 @@ class EssoraLumivioApp(Gtk.Window):
         
         headerbar.pack_end(menu_button)
         
-
+        # Contenedor principal
         main_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         self.add(main_box)
         
-
+        # Crear notebook para pestañas
         notebook = Gtk.Notebook()
         notebook.set_name("notebook")
         notebook.get_style_context().add_class("notebook")
         main_box.pack_start(notebook, True, True, 0)
         
-
+        # Pestaña 1: Captura
         capture_page = self.create_capture_page()
         notebook.append_page(capture_page, Gtk.Label(label=self.strings['tab_capture']))
         
-
+        # Pestaña 2: GIF/Video
         gif_page = self.create_gif_page()
         notebook.append_page(gif_page, Gtk.Label(label=self.strings['tab_gif']))
         
-
+        # Pestaña 3: Configuración
         settings_page = self.create_settings_page()
         notebook.append_page(settings_page, Gtk.Label(label=self.strings['tab_settings']))
         
-
+        # Botones de acción
         button_box = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         button_box.set_margin_start(16)
         button_box.set_margin_end(16)
         button_box.set_margin_top(12)
         button_box.set_margin_bottom(16)
         
-
+        # Botón Grabador
         recorder_btn = Gtk.Button(label=self.strings['btn_recorder'])
         recorder_btn.get_style_context().add_class("recorder-button")
         recorder_btn.connect("clicked", self.on_recorder_clicked)
         recorder_btn.set_size_request(200, -1)
         button_box.pack_start(recorder_btn, True, True, 0)
         
-
+        # Botón Capturar
         self.capture_btn = Gtk.Button(label=self.strings['btn_capture'])
         self.capture_btn.get_style_context().add_class("action-button")
         self.capture_btn.connect("clicked", self.on_capture_clicked)
         self.capture_btn.set_size_request(200, -1)
         button_box.pack_start(self.capture_btn, True, True, 0)
         
-
+        # Botón Cancelar
         cancel_btn = Gtk.Button(label=self.strings['btn_cancel'])
         cancel_btn.get_style_context().add_class("cancel-button")
         cancel_btn.connect("clicked", lambda x: self.destroy())
@@ -603,14 +608,14 @@ class EssoraLumivioApp(Gtk.Window):
         frame = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         frame.get_style_context().add_class("section-frame")
         
-
+        # Título de sección
         title_label = Gtk.Label()
         title_label.set_markup(f"<b>{title}</b>")
         title_label.set_xalign(0)
         title_label.get_style_context().add_class("section-title")
         frame.pack_start(title_label, False, False, 0)
         
-
+        # Contenido
         frame.pack_start(content_widget, True, True, 0)
         
         return frame
@@ -623,7 +628,7 @@ class EssoraLumivioApp(Gtk.Window):
         page_box.set_margin_top(16)
         page_box.set_margin_bottom(16)
         
-
+        # Sección: Modo de captura
         mode_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         
         self.mode_fullscreen = Gtk.RadioButton(label=self.strings['fullscreen'])
@@ -638,12 +643,12 @@ class EssoraLumivioApp(Gtk.Window):
         mode_frame = self.create_section_frame(self.strings['capture_mode'], mode_content)
         page_box.pack_start(mode_frame, False, False, 0)
         
-
+        # Sección: Opciones
         options_content = Gtk.Grid()
         options_content.set_column_spacing(12)
         options_content.set_row_spacing(12)
         
-
+        # Retardo
         delay_label = Gtk.Label(label=self.strings['delay'])
         delay_label.set_xalign(0)
         options_content.attach(delay_label, 0, 0, 1, 1)
@@ -655,7 +660,7 @@ class EssoraLumivioApp(Gtk.Window):
         self.delay_spin.set_hexpand(True)
         options_content.attach(self.delay_spin, 1, 0, 1, 1)
         
-
+        # Nombre de archivo
         filename_label = Gtk.Label(label=self.strings['filename'])
         filename_label.set_xalign(0)
         options_content.attach(filename_label, 0, 1, 1, 1)
@@ -678,12 +683,12 @@ class EssoraLumivioApp(Gtk.Window):
         page_box.set_margin_top(16)
         page_box.set_margin_bottom(16)
         
-
+        # Sección: Parámetros del GIF
         gif_content = Gtk.Grid()
         gif_content.set_column_spacing(12)
         gif_content.set_row_spacing(12)
         
-
+        # Duración
         duration_label = Gtk.Label(label=self.strings['gif_duration'])
         duration_label.set_xalign(0)
         gif_content.attach(duration_label, 0, 0, 1, 1)
@@ -695,7 +700,7 @@ class EssoraLumivioApp(Gtk.Window):
         self.gif_duration_spin.set_hexpand(True)
         gif_content.attach(self.gif_duration_spin, 1, 0, 1, 1)
         
-
+        # FPS
         fps_label = Gtk.Label(label=self.strings['gif_fps'])
         fps_label.set_xalign(0)
         gif_content.attach(fps_label, 0, 1, 1, 1)
@@ -707,7 +712,7 @@ class EssoraLumivioApp(Gtk.Window):
         self.gif_fps_spin.set_hexpand(True)
         gif_content.attach(self.gif_fps_spin, 1, 1, 1, 1)
         
-
+        # Calidad
         quality_label = Gtk.Label(label=self.strings['gif_quality'])
         quality_label.set_xalign(0)
         gif_content.attach(quality_label, 0, 2, 1, 1)
@@ -719,7 +724,7 @@ class EssoraLumivioApp(Gtk.Window):
         self.gif_quality_spin.set_hexpand(True)
         gif_content.attach(self.gif_quality_spin, 1, 2, 1, 1)
         
-
+        # Nombre de archivo
         filename_label = Gtk.Label(label=self.strings['filename'])
         filename_label.set_xalign(0)
         gif_content.attach(filename_label, 0, 3, 1, 1)
@@ -732,7 +737,7 @@ class EssoraLumivioApp(Gtk.Window):
         gif_frame = self.create_section_frame(self.strings['gif'], gif_content)
         page_box.pack_start(gif_frame, False, False, 0)
         
-
+        # Sección: Modo de captura para GIF
         mode_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         
         self.gif_mode_fullscreen = Gtk.RadioButton(label=self.strings['fullscreen'])
@@ -757,7 +762,7 @@ class EssoraLumivioApp(Gtk.Window):
         page_box.set_margin_top(16)
         page_box.set_margin_bottom(16)
         
-
+        # Sección: Carpeta de salida
         folder_content = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=12)
         
         self.folder_entry = Gtk.Entry()
@@ -773,7 +778,7 @@ class EssoraLumivioApp(Gtk.Window):
         folder_frame = self.create_section_frame(self.strings['output_folder'], folder_content)
         page_box.pack_start(folder_frame, False, False, 0)
         
-
+        # Sección: Opciones de sonido
         sound_content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         
         self.play_sound_check = Gtk.CheckButton(label=self.strings['play_sound'])
@@ -806,7 +811,7 @@ class EssoraLumivioApp(Gtk.Window):
     
     def on_capture_clicked(self, widget):
         """Manejar clic en botón capturar"""
-
+        # Determinar qué pestaña está activa
         notebook = None
         for child in self.get_children():
             if isinstance(child, Gtk.Box):
@@ -829,42 +834,42 @@ class EssoraLumivioApp(Gtk.Window):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = os.path.join(self.output_dir, f"{filename}_{timestamp}.png")
         
-
+        # Minimizar ventana antes de capturar
         self.iconify()
         
-
+        # Determinar modo de captura
         if self.mode_window.get_active():
-            mode = "-u"  
+            mode = "-u"  # Ventana activa
         elif self.mode_region.get_active():
-            mode = "-s"  
+            mode = "-s"  # Selección
         else:
-            mode = ""    
+            mode = ""    # Pantalla completa
         
-
+        # Dar tiempo a que la ventana se minimice (300ms)
         GLib.timeout_add(300, self._execute_screenshot, delay, mode, output_file)
     
     def _execute_screenshot(self, delay, mode, output_file):
         """Ejecutar la captura de screenshot"""
-
+        # Ejecutar scrot
         cmd = f"scrot -d {delay} {mode} '{output_file}'"
         
         try:
             subprocess.run(cmd, shell=True, check=True)
             
-
+            # Restaurar ventana
             self.present()
             
-
+            # Reproducir sonido
             if self.play_sound_check.get_active() and os.path.exists(self.sound_file):
                 subprocess.Popen(["aplay", self.sound_file], 
                                stdout=subprocess.DEVNULL, 
                                stderr=subprocess.DEVNULL)
             
-
+            # Mostrar notificación
             self.show_notification(f"{self.strings['saved_in']}\n{output_file}")
             
         except subprocess.CalledProcessError:
-
+            # Restaurar ventana en caso de error
             self.present()
             self.show_error("Error al capturar pantalla")
         
@@ -880,13 +885,13 @@ class EssoraLumivioApp(Gtk.Window):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_file = os.path.join(self.output_dir, f"{filename}_{timestamp}.gif")
         
-
+        # Minimizar ventana antes de capturar
         self.iconify()
         
-
+        # Crear archivo temporal
         temp_file = tempfile.mktemp(suffix=".mp4")
         
-
+        # Obtener resolución de pantalla
         try:
             screen_res = subprocess.check_output(
                 "xrandr | grep '\\*' | awk '{print $1}'",
@@ -895,7 +900,7 @@ class EssoraLumivioApp(Gtk.Window):
         except:
             screen_res = "1920x1080"
         
-
+        # Determinar modo de captura
         mode_cmd = ""
         if self.gif_mode_window.get_active():
             mode_cmd = "window"
@@ -904,7 +909,7 @@ class EssoraLumivioApp(Gtk.Window):
         else:
             mode_cmd = "fullscreen"
         
-
+        # Dar tiempo a que la ventana se minimice (300ms) + delay del usuario
         total_delay = delay if delay > 0 else 0
         GLib.timeout_add(300, self._start_gif_capture,
                         mode_cmd, screen_res, fps, duration, 
@@ -927,7 +932,7 @@ class EssoraLumivioApp(Gtk.Window):
             display = os.environ.get('DISPLAY', ':0.0')
             
             if mode == "fullscreen":
-
+                # Captura pantalla completa
                 cmd1 = [
                     'ffmpeg', '-y', '-f', 'x11grab',
                     '-video_size', screen_res,
@@ -939,7 +944,7 @@ class EssoraLumivioApp(Gtk.Window):
                 subprocess.run(cmd1, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
                 
             elif mode == "region":
-
+                # Captura región seleccionada
                 slop_output = subprocess.check_output(['slop', '-f', '%x %y %w %h']).decode().strip()
                 if slop_output:
                     x, y, w, h = slop_output.split()
@@ -953,7 +958,7 @@ class EssoraLumivioApp(Gtk.Window):
                     ]
                     subprocess.run(cmd1, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
             
-
+            # Convertir a GIF
             palette_filter = f"fps={fps},scale=iw:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=256:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3"
             
             cmd2 = [
@@ -965,24 +970,24 @@ class EssoraLumivioApp(Gtk.Window):
             ]
             subprocess.run(cmd2, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
             
-
+            # Limpiar archivo temporal
             if os.path.exists(temp_file):
                 os.remove(temp_file)
             
-
+            # Restaurar ventana
             self.present()
             
-
+            # Reproducir sonido
             if self.play_sound_check.get_active() and os.path.exists(self.sound_file):
                 subprocess.Popen(["aplay", self.sound_file],
                                stdout=subprocess.DEVNULL,
                                stderr=subprocess.DEVNULL)
             
-
+            # Mostrar notificación
             self.show_notification(f"{self.strings['saved_in']}\n{output_file}")
             
         except Exception as e:
-
+            # Restaurar ventana en caso de error
             self.present()
             self.show_error(f"Error al crear GIF: {str(e)}")
         
@@ -991,9 +996,9 @@ class EssoraLumivioApp(Gtk.Window):
     def on_recorder_clicked(self, widget):
         """Abrir grabador de pantalla"""
         try:
-
+            # Abrir Screen_Recorder.py
             subprocess.Popen(["/usr/local/Lumivio/Screen_Recorder.py"])
-
+            # Cerrar esta ventana
             self.destroy()
         except Exception as e:
             self.show_error(f"No se pudo abrir el grabador de pantalla: {str(e)}")
@@ -1030,9 +1035,9 @@ class EssoraLumivioApp(Gtk.Window):
         dialog.set_transient_for(self)
         dialog.set_modal(True)
         
-
+        # Configurar información
         dialog.set_program_name("Essora Lumivio")
-        dialog.set_version("1.0.0")
+        dialog.set_version("1.2.0")
         dialog.set_comments(self.strings['about_description'])
         dialog.set_copyright("Copyright © 2025 josejp2424")
         dialog.set_authors(["josejp2424"])
@@ -1040,7 +1045,7 @@ class EssoraLumivioApp(Gtk.Window):
         dialog.set_website("https://github.com/josejp2424")
         dialog.set_website_label("GitHub")
         
-
+        # Configurar logo/icono
         if os.path.exists(self.icon_path):
             try:
                 pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(
